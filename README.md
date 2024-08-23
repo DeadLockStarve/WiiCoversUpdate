@@ -22,6 +22,7 @@ A config file can be set with `-c` argument or simply by having it's path in `WI
     covers_root_dir=/your/path/here
     covers_path=covers
     covers_path_3d=3d
+    covers_path_disc=disc
     covers_path_full=full
     locales=ES,EN,US,JA
 

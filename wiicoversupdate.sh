@@ -74,6 +74,7 @@ generate_cfile () {
 	read -p "Enter wbfs directory path: " wbfs_dir
 	read -p "Enter normal covers path: " covers_path
 	read -p "Enter 3d covers path: " covers_path_3d
+	read -p "Enter disc covers path: " covers_path_disc
 	read -p "Enter full covers path: " covers_path_full
 	echo "# WiiCoversUpdate Config
 root_dir=$root_dir
@@ -82,6 +83,7 @@ locales=$locales
 covers_root_dir=$covers_root_dir
 covers_path=$covers_path
 covers_path_3d=$covers_path_3d
+covers_path_disc=$covers_path_disc
 covers_path_full=$covers_path_full" > "$config_file"
 }
 
@@ -89,7 +91,7 @@ parse_cfile () {
 	while IFS== read -r key value; do
 		case $key in
 			\#*) continue ;;
-			root_dir|wbfs_dir|locales|covers_root_dir|covers_path|covers_path_3d|covers_path_full)
+			root_dir|wbfs_dir|locales|covers_root_dir|covers_path|covers_path_3d|covers_path_disc|covers_path_full)
 				eval "${key}=\"${value}\""
 			;;
 			*) err "Unrecognized: $key" ;;
@@ -108,7 +110,7 @@ create_config_dir () {
 
 create_dirs () {
 	local i
-	for i in "$covers_path" "$covers_path_3d" "$covers_path_full"; do
+	for i in "$covers_path" "$covers_path_3d" "$covers_path_disc" "$covers_path_full"; do
 		[ -d "$covers_root_dir/$i" ] && continue
 		echo "Creating covers folder: $covers_root_dir/$i"
 		mkdir -p "$covers_root_dir/$i" || err_help "Cannot create this covers folder"
@@ -131,10 +133,21 @@ download_cover () {
 	wget "${url}" -O "${4}"
 }
 
+update_rom_disccover () {
+	local type
+	for type in disc disccustom disccustomB; do
+		check_cover_url "$type" "$1" "$2" || continue
+		download_cover "$type" "$1" "$2" "$3"
+		break
+	done
+}
+
 update_rom_fullcover () {
 	local type
 	for type in "${fullcov_array[@]}"; do
-		download_cover "$type" "$1" "$2" "$3" && break
+		check_cover_url "$type" "$1" "$2" || continue
+		download_cover "$type" "$1" "$2" "$3"
+		break
 	done
 }
 
@@ -143,6 +156,7 @@ update_rom_covers () {
 	local rom_covers=(
 		"$covers_root_dir/$covers_path/$1.png"
 		"$covers_root_dir/$covers_path_3d/$1.png"
+		"$covers_root_dir/$covers_path_disc/$1.png"
 		"$covers_root_dir/$covers_path_full/$1.png"
 	)
 	for locale in ${locales//,/ }; do
@@ -150,8 +164,8 @@ update_rom_covers () {
 		check_cover "$1" "${rom_covers[0]}" && download_cover cover "$locale" "$1" "${rom_covers[0]}"
 		check_cover "$1" "${rom_covers[1]}" && check_cover_url cover3D "$locale" "$1" && \
 			download_cover cover3D "$locale" "$1" "${rom_covers[1]}"
-		check_cover "$1" "${rom_covers[2]}" || break
-		update_rom_fullcover "$locale" "$1" "${rom_covers[2]}"
+		check_cover "$1" "${rom_covers[2]}" && update_rom_disccover "$locale" "$1" "${rom_covers[2]}"
+		check_cover "$1" "${rom_covers[3]}" && update_rom_fullcover "$locale" "$1" "${rom_covers[3]}"
 		break
 	done
 }
@@ -173,7 +187,7 @@ update_roms_covers () {
 
 function main () {
 	local config_file="${config_file:-$WII_COVERS_CONFIG}" generate_cfile=false fullcov_array=(coverfullHQ coverfull)
-	local root_dir wbfs_dir locales covers_root_dir covers_path covers_path_3d covers_path_full
+	local root_dir wbfs_dir locales covers_root_dir covers_path covers_path_3d covers_path_disc covers_path_full
 	parse_opts "$@"
 	[ ! -d "${config_file%\/*}" ] && ! mkdir -p "${config_file%\/*}" && \
 		err_help "Cannot create config parent folder ${config_file%\/*}"
