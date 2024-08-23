@@ -152,13 +152,17 @@ update_rom_fullcover () {
 }
 
 update_rom_covers () {
-	local locale
+	local locale i ok=true
 	local rom_covers=(
 		"$covers_root_dir/$covers_path/$1.png"
 		"$covers_root_dir/$covers_path_3d/$1.png"
 		"$covers_root_dir/$covers_path_disc/$1.png"
 		"$covers_root_dir/$covers_path_full/$1.png"
 	)
+	for ((i=0; i<4; i++)); do
+		[ -f "${rom_covers[$i]}" ] || ok=false
+	done
+	$ok && return
 	for locale in ${locales//,/ }; do
 		check_cover_url cover "$locale" "$1" || continue
 		check_cover "$1" "${rom_covers[0]}" && download_cover cover "$locale" "$1" "${rom_covers[0]}"
