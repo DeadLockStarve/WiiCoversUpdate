@@ -6,7 +6,7 @@ Very simple bash script which lets you download covers like WiiFlow does, or may
 
 It simply generates gamestdb urls pointing to png cover files according to input parameters, with localization priority according to user's preference.
 
-When trying to fetch a remote cover, it attempts to fetch a front cover, if it succeeds tries to download corresponding 3d and full covers.
+When trying to fetch a remote cover, it attempts to fetch a front cover, if it succeeds tries to download corresponding 3d, disc, and full covers.
 
 ## Installation
 
